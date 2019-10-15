@@ -44,7 +44,7 @@ Args:
     
 2.  Click ***搜索*** to search.
 
-    ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/2.png)
+    ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/2_new.png)
     
 3.  Enter the user you want to find and click ***找人***.
 

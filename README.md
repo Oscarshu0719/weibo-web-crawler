@@ -39,12 +39,19 @@ Args:
 ## Get Weibo user ID
 
 1.  Visit [https://weibo.cn](https://weibo.cn/), click ***登录*** to login.
+
     ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/1.png)
+    
 2.  Click ***搜索*** to search.
+
     ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/2.png)
+    
 3.  Enter the user you want to find and click ***找人***.
+
     ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/3.png)
+    
 4.  Enter his/her page and the `user_id` is the number string in the URL. The `user_id` is $3591355593$ in this example.
+
     ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/4.png)
 
 ## License

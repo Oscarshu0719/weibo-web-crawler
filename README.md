@@ -40,7 +40,7 @@ Args:
 
 1.  Visit [https://weibo.cn](https://weibo.cn/), click ***登录*** to login.
 
-    ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/1.png)
+    ![image](https://github.com/Oscarshu0719/weibo-web-crawler/blob/master/readme_img/1_new.png)
     
 2.  Click ***搜索*** to search.
 

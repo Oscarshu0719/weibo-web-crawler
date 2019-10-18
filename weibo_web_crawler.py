@@ -51,6 +51,8 @@ RESULT_PATH = os.path.join('.', 'results')
 
 PATTERN_DATE = r'\d\d\d\d-\d\d-\d\d'
 
+post_count = 1
+
 """
 SELECT_FORWARDED_POST:
     True: Select forwarded and original posts. 
@@ -86,58 +88,6 @@ def get_video_url(post_info):
                         video_url = ''
 
     return video_url
-
-def get_location(selector):
-    location_icon = 'timeline_card_small_location_default.png'
-    span_list = selector.xpath('//span')
-
-    location = ''
-    for i, span in enumerate(span_list):
-        if span.xpath('img/@src'):
-            if location_icon in span.xpath('img/@src')[0]:
-                location = span_list[i + 1].xpath('string(.)')
-                break
-
-    return location
-
-def get_topics(selector):
-    span_list = selector.xpath("//span[@class='surl-text']")
-
-    topics = ''
-    topic_list = []
-    for span in span_list:
-        text = span.xpath('string(.)')
-        if len(text) > 2 and text[0] == '#' and text[-1] == '#':
-            topic_list.append(text[1: -1])
-
-    if topic_list:
-        topics = ', '.join(topic_list)
-
-    return topics
-
-def get_at_users(selector):
-    a_list = selector.xpath('//a')
-
-    at_users = ''
-    at_list = []
-    for a in a_list:
-        if '@' + a.xpath('@href')[0][3: ] == a.xpath('string(.)'):
-            at_list.append(a.xpath('string(.)')[1: ])
-
-    if at_list:
-        at_users = ', '.join(at_list)
-
-    return at_users
-
-def string_to_int(string):
-    if isinstance(string, int):
-        return string
-    elif string.endswith(u'万+'):
-        string = int(string[: -2] + '0000')
-    elif string.endswith(u'万'):
-        string = int(string[: -1] + '0000')
-
-    return int(string)
 
 def standardize_info(info):
     for key, value in info.items():
@@ -179,20 +129,9 @@ def parse_post(post_info):
         post['screen_name'] = ''
 
     post['id'] = int(post_info['id'])
-    post['bid'] = post_info['bid']
-    text_body = post_info['text']
-    selector = etree.HTML(text_body)
-    post['text'] = etree.HTML(text_body).xpath('string(.)')
     post['pics'] = get_pics(post_info)
     post['video_url'] = get_video_url(post_info)
-    post['location'] = get_location(selector)
     post['created_at'] = post_info['created_at']
-    post['source'] = post_info['source']
-    post['attitudes_count'] = string_to_int(post_info['attitudes_count'])
-    post['comments_count'] = string_to_int(post_info['comments_count'])
-    post['reposts_count'] = string_to_int(post_info['reposts_count'])
-    post['topics'] = get_topics(selector)
-    post['at_users'] = get_at_users(selector)
 
     return standardize_info(post)
 
@@ -221,17 +160,13 @@ def is_pinned_post(info):
         return False
 
 def print_one_post(post):
+    global post_count
+    print('* Post No.{}'.format(post_count))
     print('id: {}'.format(post['id']))
-    print('text: {}'.format(post['text']))
     print('pics: {}'.format(post['pics']))
-    print('location: {}'.format(post['location']))
     print('created_at: {}'.format(post['created_at']))
-    print('source: {}'.format(post['source']))
-    print('attitudes_count: {}'.format(post['attitudes_count']))
-    print('comments_count: {}'.format(post['comments_count']))
-    print('reposts_count: {}'.format(post['reposts_count']))
-    print('topics: {}'.format(post['topics']))
-    print('at_users: {}'.format(post['at_users']))
+    
+    post_count += 1
 
 def print_posts(post):
     if post.get('retweet'):
@@ -242,15 +177,10 @@ def print_posts(post):
     print()
 
 def print_user_info(user_info):
-    print('\nUser info: ')
+    print('\n* User info: ')
     print('id: {}'.format(user_info['id']))
     print('screen_name: {}'.format(user_info['screen_name']))
-    print('gender: {}'.format(user_info['gender']))
     print('statuses_count: {}'.format(user_info['statuses_count']))
-    print('followers_count: {}'.format(user_info['followers_count']))
-    print('follow_count: {}'.format(user_info['follow_count']))
-    print('verified_reason: {}'.format(user_info['verified_reason']))
-    print('description: {}'.format(user_info['description']))
     print()
 
 def get_one_post(info):
@@ -334,7 +264,7 @@ def get_one_page(user_id, page):
                     if SELECT_FORWARDED_POST or 'retweet' not in post_info.keys():
                         selected_post_list.append(post_info)
                         post_id_list.append(post_info['id'])
-                        # print_posts(post_info)
+                        print_posts(post_info)
     else:
         msg = '\n{} - Warning: Failed to get this page (page: {}).\n'.format(
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"), page)
@@ -352,19 +282,7 @@ def get_user_info(user_id):
         user_info = dict()
         user_info['id'] = user_id
         user_info['screen_name'] = info.get('screen_name', '')
-        user_info['gender'] = info.get('gender', '')
         user_info['statuses_count'] = info.get('statuses_count', 0)
-        user_info['followers_count'] = info.get('followers_count', 0)
-        user_info['follow_count'] = info.get('follow_count', 0)
-        user_info['description'] = info.get('description', '')
-        user_info['profile_url'] = info.get('profile_url', '')
-        user_info['profile_image_url'] = info.get('profile_image_url', '')
-        user_info['avatar_hd'] = info.get('avatar_hd', '')
-        user_info['urank'] = info.get('urank', 0)
-        user_info['mbrank'] = info.get('mbrank', 0)
-        user_info['verified'] = info.get('verified', False)
-        user_info['verified_type'] = info.get('verified_type', 0)
-        user_info['verified_reason'] = info.get('verified_reason', '')
 
         return standardize_info(user_info)
     else:
@@ -391,7 +309,7 @@ def download_one_file(url, save_path):
         traceback.print_exc(file=open(LOG_PATH, 'a', encoding='utf8'))
 
 def download_images_and_videos(save_path):
-    print('Start downloading images and videos ...\n')
+    print('\nStart downloading images and videos ...\n')
     for post in tqdm(selected_post_list, desc='Progress'):
         file_prefix = post['created_at'][: 11].replace('-', '') + '_' + str(post['id'])
         if post['pics']:
@@ -406,9 +324,12 @@ def download_images_and_videos(save_path):
             file_name = file_prefix + '.mp4'
             file_path = os.path.join(save_path, 'videos', file_name) 
             download_one_file(post['video_url'], file_path)
-    print('Finish downloading images and videos ...\n')
+    print('\nFinish downloading images and videos ...\n')
 
 def web_crawler(user_id_list):
+    global START_DATE
+    global END_DATE
+
     for x in user_id_list:
         if len(x) != 1:
             if re.match(PATTERN_DATE, x[1]):
@@ -417,8 +338,10 @@ def web_crawler(user_id_list):
                 END_DATE = x[2]
         user_id = x[0]
 
+        print(START_DATE, END_DATE)
+
         user_info = get_user_info(user_id)
-        # print_user_info(user_info)
+        print_user_info(user_info)
         page_count = int(math.ceil(user_info['statuses_count'] / 10.0))
 
         selected_post_list = list()
@@ -427,7 +350,7 @@ def web_crawler(user_id_list):
         tmp_page = 0
         random_pages = random.randint(1, 5)
 
-        print('Start exploring ...\n')
+        print('\nStart exploring ...\n')
         for page in tqdm(range(1, page_count + 1), desc='Progress'):
             print('\nPage: %d.\n' % page)
             # Check if it's over.
@@ -439,7 +362,9 @@ def web_crawler(user_id_list):
                 sleep(random.randint(6, 10))
                 tmp_page = page
                 random_pages = random.randint(1, 5)
-        print('Finish exploring ...\n')
+        print('\nFinish exploring ...\n')
+
+        print('\n* Total number of posts: {}.\n'.format(post_count))
 
         save_path = os.path.join(RESULT_PATH, user_info['screen_name'])
 

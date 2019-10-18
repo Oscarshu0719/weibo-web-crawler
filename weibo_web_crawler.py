@@ -338,8 +338,6 @@ def web_crawler(user_id_list):
                 END_DATE = x[2]
         user_id = x[0]
 
-        print(START_DATE, END_DATE)
-
         user_info = get_user_info(user_id)
         print_user_info(user_info)
         page_count = int(math.ceil(user_info['statuses_count'] / 10.0))

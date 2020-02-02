@@ -277,7 +277,12 @@ def get_one_page(user_id, page):
 
                     # find vedio name, vedio only
                     if 'video_url' in post_info.keys() and post_info['video_url'] != '':
-                        post_info['vediotitle'] = BeautifulSoup(post['mblog']['text']).p.contents[0]
+                        try:
+                            now_title = BeautifulSoup(post['mblog']['text']).p.contents[0]
+                        except Exception as e:
+                            now_title = 'GetTitleError'
+                        now_title = "".join(now_title.split())
+                        post_info['vediotitle'] = now_title
 
                     if SELECT_FORWARDED_POST or 'retweet' not in post_info.keys():
                         selected_post_list.append(post_info)
@@ -312,11 +317,12 @@ def get_user_info(user_id):
 
 def download_one_file(url, save_path):
     try:
-        if not os.path.isfile(save_path):
+        newName = re.sub('[\/:*?"<>|]','-',save_path)
+        if not os.path.isfile(newName):
             session = requests.Session()
             session.mount(url, HTTPAdapter(max_retries=5))
             downloaded = session.get(url, timeout=(5, 10))
-            with open(save_path, 'wb') as file:
+            with open(newName, 'wb') as file:
                 file.write(downloaded.content)
     except Exception as e:
         msg = '\n{} - Warning: Failed to download this file (url: {}).\n'.format(
@@ -336,19 +342,20 @@ def download_images_and_videos(save_path, download_type):
     print('Find ' + str(iVedioCount) + ' Videos')
 
     for post in tqdm(selected_post_list, desc='Progress'):
-        file_prefix = post['created_at'][: 11].replace('-', '') + '_' + str(post['id'])
+        file_prefix = post['created_at'][: 11].replace('-', '')
+        file_prefix_2 = '_' + str(post['id'])
         if 'pv' in download_type or 'p' in download_type:
             if post['pics']:
                 if ', ' in post['pics']:
                     post['pics'] = post['pics'].split(', ')
                     for i, url in enumerate(post['pics']):
                         file_suffix = url[url.rfind('.'): ]
-                        file_name = file_prefix + '_' + str(i + 1) + file_suffix
+                        file_name = file_prefix + file_prefix_2 + '_' + str(i + 1) + file_suffix
                         file_path = os.path.join(save_path, 'images', file_name) 
                         download_one_file(url, file_path)
         if 'pv' in download_type or 'v' in download_type:
             if post['video_url']:
-                file_name = post['vediotitle'] + "_" + file_prefix   + '.mp4'
+                file_name = file_prefix + "_" + post['vediotitle'] + file_prefix_2 + '.mp4'
                 file_path = os.path.join(save_path, 'videos', file_name) 
                 download_one_file(post['video_url'], file_path)
     print('\nFinish downloading images and videos ...\n')
@@ -361,7 +368,7 @@ def web_crawler(user_id_list):
         if len(x) != 1:
             if re.match(PATTERN_DATE, x[1]):
                 START_DATE = x[1]
-            if len(x) == 3 and re.match(PATTERN_DATE, x[2]):
+            if len(x) == 4 and re.match(PATTERN_DATE, x[2]):
                 END_DATE = x[2]
                 download_type = x[3]
             else:
@@ -417,6 +424,8 @@ if __name__ == '__main__':
     with open(sys.argv[1], 'r', encoding='utf8') as input_file:
         for line in input_file:
             line = line.strip()
+            if line.find('#') == 0:
+                continue
             if '#' in line:
                 onelines = line.split('#')
                 assert len(onelines) == 2, 'Error: This line is incorrect.' + line
